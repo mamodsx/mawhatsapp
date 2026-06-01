@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAWhatsApp</title>
+<title>MAWhatsApp | 1.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,17 +50,8 @@ body {
   transition: width .2s var(--ease-spring), height .2s var(--ease-spring), background .2s;
   will-change: left, top;
 }
-#cur-ring {
-  position: fixed; width: 40px; height: 40px;
-  border: 1.5px solid rgba(0,255,135,0.5);
-  border-radius: 50%; pointer-events: none;
-  z-index: 99998;
-  transform: translate(-50%, -50%);
-  transition: width .35s var(--ease-spring), height .35s var(--ease-spring), border-color .2s, border-radius .3s;
-  will-change: left, top;
-}
-body.cursor-hover #cur-dot  { width: 16px; height: 16px; background: #fff; }
-body.cursor-hover #cur-ring { width: 64px; height: 64px; border-color: var(--acid); border-radius: 16px; }
+#cur-ring { display: none; }
+body.cursor-hover #cur-dot { width: 16px; height: 16px; background: #fff; }
 
 /* ═══════════════════════════════════════════════════════
    CANVAS LAYERS
@@ -355,6 +346,7 @@ nav {
   display: flex; justify-content: space-between; align-items: flex-start;
   font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
   color: #fff; position: relative; z-index: 10;
+  background: #000;
 }
 .phone-status .icons { display: flex; gap: 5px; align-items: center; }
 .phone-status .icons i { font-size: 10px; }
@@ -369,37 +361,6 @@ nav {
 }
 .phone-img-slot img.active { opacity: 1; }
 
-/* Fallback gradient screen when no image */
-.phone-fallback {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 12px;
-}
-.ph-chat-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 16px; width: 90%;
-  background: rgba(255,255,255,0.04);
-  border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);
-}
-.ph-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  flex-shrink: 0;
-}
-.ph-info { flex: 1; }
-.ph-name {
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.85);
-  margin-bottom: 3px;
-}
-.ph-msg { font-size: 9px; color: rgba(255,255,255,0.35); }
-.ph-time { font-size: 9px; color: var(--acid); opacity: 0.7; }
-
-.ph-unread {
-  width: 18px; height: 18px; border-radius: 50%;
-  background: var(--acid); color: #000;
-  font-size: 9px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
 
 .phone-tabbar {
   height: 72px;
@@ -412,12 +373,24 @@ nav {
 }
 .ph-tab {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  cursor: pointer;
+  cursor: pointer; transition: transform .2s var(--ease-spring);
 }
-.ph-tab i { font-size: 15px; color: rgba(255,255,255,0.25); transition: color .2s, transform .2s var(--ease-spring); }
-.ph-tab span { font-size: 7.5px; color: rgba(255,255,255,0.2); font-family: 'JetBrains Mono', monospace; transition: color .2s; }
-.ph-tab.active i { color: var(--acid); transform: scale(1.15); }
-.ph-tab.active span { color: var(--acid); }
+.ph-tab:active { transform: scale(0.9); }
+
+/* Image-based tab icons */
+.ph-tab-icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+.ph-tab-icon img { width: 26px; height: 26px; object-fit: contain; display: block; }
+.ph-tab-icon .tab-normal   { display: block; }
+.ph-tab-icon .tab-selected { display: none; }
+.ph-tab.active .ph-tab-icon .tab-normal   { display: none; }
+.ph-tab.active .ph-tab-icon .tab-selected { display: block; }
+
+.ph-tab-label {
+  font-size: 7.5px; color: rgba(255,255,255,0.3);
+  font-family: 'JetBrains Mono', monospace;
+  transition: color .2s;
+}
+.ph-tab.active .ph-tab-label { color: var(--acid); }
 
 /* Phone floor glow — no wrapper card, just free-floating glow */
 .phone-glow-floor {
@@ -897,7 +870,7 @@ footer {
 
 <!-- CURSOR -->
 <div id="cur-dot"></div>
-<div id="cur-ring"></div>
+
 
 <!-- BG CANVASES -->
 <canvas id="c-star"></canvas>
@@ -967,49 +940,52 @@ footer {
                 <i class="fas fa-battery-three-quarters"></i>
               </div>
             </div>
+            <!-- Screen images -->
             <div class="phone-img-slot" id="phone-img-slot">
-              <!-- Real screenshots if available -->
-              <img src="ma.chats.png"     class="active"  data-tab="chats"     alt="Chats"     onerror="this.style.display='none'">
-              <img src="ma.updates.png"               data-tab="updates"   alt="Updates"   onerror="this.style.display='none'">
-              <img src="ma.community.png"             data-tab="community" alt="Community" onerror="this.style.display='none'">
-              <img src="ma.calls.png"                 data-tab="calls"     alt="Calls"     onerror="this.style.display='none'">
-              <img src="ma.settings.png"              data-tab="settings"  alt="Settings"  onerror="this.style.display='none'">
-
-              <!-- Fallback demo UI -->
-              <div class="phone-fallback" id="ph-fallback">
-                <div class="ph-chat-row">
-                  <canvas class="ph-avatar" id="av1" width="36" height="36"></canvas>
-                  <div class="ph-info"><div class="ph-name">Sarah ✨</div><div class="ph-msg">Check this out! 🔥</div></div>
-                  <div style="text-align:right"><div class="ph-time">9:41</div><div class="ph-unread">3</div></div>
-                </div>
-                <div class="ph-chat-row">
-                  <canvas class="ph-avatar" id="av2" width="36" height="36"></canvas>
-                  <div class="ph-info"><div class="ph-name">Ahmad 🚀</div><div class="ph-msg">Yo bro what's up</div></div>
-                  <div style="text-align:right"><div class="ph-time">9:38</div><div class="ph-unread">1</div></div>
-                </div>
-                <div class="ph-chat-row">
-                  <canvas class="ph-avatar" id="av3" width="36" height="36"></canvas>
-                  <div class="ph-info"><div class="ph-name">Dev Group 💻</div><div class="ph-msg">Mohamed: New update!</div></div>
-                  <div style="text-align:right"><div class="ph-time">9:30</div></div>
-                </div>
-                <div class="ph-chat-row">
-                  <canvas class="ph-avatar" id="av4" width="36" height="36"></canvas>
-                  <div class="ph-info"><div class="ph-name">Nour 🌙</div><div class="ph-msg">👍</div></div>
-                  <div style="text-align:right"><div class="ph-time">9:12</div></div>
-                </div>
-                <div class="ph-chat-row">
-                  <canvas class="ph-avatar" id="av5" width="36" height="36"></canvas>
-                  <div class="ph-info"><div class="ph-name">Family 🏠</div><div class="ph-msg">Photo received</div></div>
-                  <div style="text-align:right"><div class="ph-time">8:55</div></div>
-                </div>
-              </div>
+              <img src="ma.chats.png"     class="active" data-tab="chats"     alt="Chats">
+              <img src="ma.updates.png"                  data-tab="updates"   alt="Updates">
+              <img src="ma.community.png"                data-tab="community" alt="Community">
+              <img src="ma.calls.png"                    data-tab="calls"     alt="Calls">
+              <img src="ma.settings.png"                 data-tab="settings"  alt="Settings">
             </div>
+
+            <!-- Tab bar with original iOS icon images -->
             <div class="phone-tabbar">
-              <div class="ph-tab" data-tab="updates"   onclick="switchTab(this)"><i class="fas fa-circle-dot"></i><span>Updates</span></div>
-              <div class="ph-tab" data-tab="calls"     onclick="switchTab(this)"><i class="fas fa-phone"></i><span>Calls</span></div>
-              <div class="ph-tab" data-tab="community" onclick="switchTab(this)"><i class="fas fa-users"></i><span>Community</span></div>
-              <div class="ph-tab active" data-tab="chats" onclick="switchTab(this)"><i class="fas fa-message"></i><span>Chats</span></div>
-              <div class="ph-tab" data-tab="settings"  onclick="switchTab(this)"><i class="fas fa-gear"></i><span>Settings</span></div>
+              <div class="ph-tab" data-tab="updates" onclick="switchTab(this)">
+                <div class="ph-tab-icon">
+                  <img class="tab-normal"   src="ma_ios_tab_status.png"          alt="Updates">
+                  <img class="tab-selected" src="ma_ios_tab_selected_status.png" alt="Updates">
+                </div>
+                <span class="ph-tab-label">Updates</span>
+              </div>
+              <div class="ph-tab" data-tab="calls" onclick="switchTab(this)">
+                <div class="ph-tab-icon">
+                  <img class="tab-normal"   src="ma_ios_tab_call.png"          alt="Calls">
+                  <img class="tab-selected" src="ma_ios_tab_selected_call.png" alt="Calls">
+                </div>
+                <span class="ph-tab-label">Calls</span>
+              </div>
+              <div class="ph-tab" data-tab="community" onclick="switchTab(this)">
+                <div class="ph-tab-icon">
+                  <img class="tab-normal"   src="ma_ios_tab_comyn.png"          alt="Community">
+                  <img class="tab-selected" src="ma_ios_tab_selected_comyn.png" alt="Community">
+                </div>
+                <span class="ph-tab-label">Community</span>
+              </div>
+              <div class="ph-tab active" data-tab="chats" onclick="switchTab(this)">
+                <div class="ph-tab-icon">
+                  <img class="tab-normal"   src="ma_ios_tab_chat.png"          alt="Chats">
+                  <img class="tab-selected" src="ma_ios_tab_selected_chat.png" alt="Chats">
+                </div>
+                <span class="ph-tab-label">Chats</span>
+              </div>
+              <div class="ph-tab" data-tab="settings" onclick="switchTab(this)">
+                <div class="ph-tab-icon">
+                  <img class="tab-normal"   src="ma_ios_tab_settings.png"          alt="Settings">
+                  <img class="tab-selected" src="ma_ios_tab_selected_settings.png" alt="Settings">
+                </div>
+                <span class="ph-tab-label">Settings</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1230,25 +1206,18 @@ const lInt = setInterval(() => {
 /* ──────────────────────────────
    CURSOR
 ────────────────────────────── */
-const dot  = document.getElementById('cur-dot');
-const ring = document.getElementById('cur-ring');
-let mx = 0, my = 0, rx = 0, ry = 0;
+const dot = document.getElementById('cur-dot');
+let mx = 0, my = 0;
 
 document.addEventListener('mousemove', e => {
   mx = e.clientX; my = e.clientY;
   dot.style.left = mx + 'px'; dot.style.top = my + 'px';
 });
-(function animRing() {
-  rx += (mx - rx) * 0.1; ry += (my - ry) * 0.1;
-  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
-  requestAnimationFrame(animRing);
-})();
 
 document.querySelectorAll('a, button, .dl-card, .feat-card, .spec-cell, .ph-tab, .dev-link, .dl-dl-btn, .nav-dl').forEach(el => {
   el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
   el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
 });
-
 /* ──────────────────────────────
    STAR / PARTICLE CANVAS
 ────────────────────────────── */
@@ -1422,33 +1391,6 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 10000);
-
-/* ──────────────────────────────
-   CANVAS AVATARS for fallback chats
-────────────────────────────── */
-const avatarData = [
-  { id:'av1', color:'#e040fb', letter:'S' },
-  { id:'av2', color:'#00bcd4', letter:'A' },
-  { id:'av3', color:'#ff7043', letter:'D' },
-  { id:'av4', color:'#66bb6a', letter:'N' },
-  { id:'av5', color:'#ffa726', letter:'F' },
-];
-avatarData.forEach(({id, color, letter}) => {
-  const c = document.getElementById(id);
-  if (!c) return;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = color + '33';
-  ctx.fillRect(0, 0, 36, 36);
-  ctx.beginPath();
-  ctx.arc(18, 18, 18, 0, Math.PI*2);
-  ctx.fillStyle = color + '44';
-  ctx.fill();
-  ctx.fillStyle = color;
-  ctx.font = 'bold 15px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(letter, 18, 18);
-});
 
 /* ──────────────────────────────
    SCROLL REVEAL (IntersectionObserver)
